@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { ShieldCheck, HardHat } from 'lucide-react';
+import { GlobalAppConfig } from '../types';
 
 interface LoginProps {
   onLogin: () => void;
+  appConfig: GlobalAppConfig;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, appConfig }) => {
   const [email, setEmail] = useState('admin@metalworks.com');
   const [password, setPassword] = useState('password');
   const [loading, setLoading] = useState(false);
@@ -23,14 +26,18 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-        <div className="bg-blue-600 p-8 text-center">
+        <div className="bg-blue-600 p-8 text-center flex flex-col items-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <HardHat className="text-white w-8 h-8" />
-            </div>
+            {appConfig.logoUrl ? (
+                <img src={appConfig.logoUrl} alt="Logo" className="h-16 w-16 rounded-xl object-contain bg-white/10 backdrop-blur-sm" />
+            ) : (
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <HardHat className="text-white w-8 h-8" />
+                </div>
+            )}
           </div>
-          <h1 className="text-3xl font-bold text-white">MetalWorks ERP</h1>
-          <p className="text-blue-100 mt-2">Gestion de production & Gantt</p>
+          <h1 className="text-3xl font-bold text-white">{appConfig.appName}</h1>
+          <p className="text-blue-100 mt-2">{appConfig.appSubtitle}</p>
         </div>
         
         <div className="p-8">
@@ -76,7 +83,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </form>
           
           <div className="mt-6 text-center text-xs text-slate-400">
-            Version 2.4.0 • Accès Sécurisé
+            Version {appConfig.appVersion} • Accès Sécurisé
           </div>
         </div>
       </div>

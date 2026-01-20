@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -10,20 +11,64 @@
       body {
         font-family: 'Inter', sans-serif;
       }
-      /* Custom Scrollbar for Gantt */
-      .gantt-scroll::-webkit-scrollbar {
-        height: 10px;
-        width: 10px;
+      
+      /* Global Modern Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-      .gantt-scroll::-webkit-scrollbar-track {
-        background: #f1f5f9;
+      ::-webkit-scrollbar-track {
+        background: transparent;
       }
-      .gantt-scroll::-webkit-scrollbar-thumb {
+      ::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        border-radius: 5px;
+        border-radius: 10px;
       }
-      .gantt-scroll::-webkit-scrollbar-thumb:hover {
+      ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
+      }
+
+      /* Specific adjustments for Gantt if needed, otherwise inherit global */
+      .gantt-scroll::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+      }
+
+      /* Print / PDF Export Styles */
+      @media print {
+        @page {
+          size: landscape;
+          margin: 0.5cm;
+        }
+        body {
+          background-color: white;
+          overflow: visible !important;
+        }
+        /* Hide sidebar, header, and non-printable controls */
+        aside, header, .no-print {
+          display: none !important;
+        }
+        /* Ensure Gantt is visible and scrollbars are hidden (expand content) */
+        main {
+          margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+        .gantt-container {
+          box-shadow: none !important;
+          border: none !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+        .gantt-scroll {
+          overflow: visible !important;
+        }
+        /* Force background colors */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
       }
     </style>
   <script type="importmap">
@@ -33,7 +78,9 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "jspdf": "https://esm.sh/jspdf@2.5.1"
   }
 }
 </script>

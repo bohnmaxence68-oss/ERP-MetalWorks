@@ -14,9 +14,10 @@ export const generateProjectPlan = async (description: string): Promise<Task[]> 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: `Generate a project plan for: "${description}". The project starts on Day 0.`,
       config: {
+        thinkingConfig: { thinkingBudget: 32768 },
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: {

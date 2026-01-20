@@ -3,29 +3,33 @@ import { Task } from '../types';
 /**
  * Calculates Early Start, Early Finish, Late Start, Late Finish, Slack, and Critical Path.
  * Assumes dependencies are Finish-to-Start.
+ * Respects 'forcedStartDate' as a "Start No Earlier Than" constraint.
  */
 export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[] => {
   if (tasks.length === 0) return [];
 
   // Deep copy to avoid mutating original state directly during calculation
+  // We preserve the order of the input array
   const calculatedTasks: Task[] = JSON.parse(JSON.stringify(tasks));
   const taskMap = new Map<string, Task>();
   
   // Initialize map and date objects
   calculatedTasks.forEach(t => {
-    // Reset calculated fields
+    // Reset calculated fields but keep forcedStartDate
     t.startDate = undefined;
     t.endDate = undefined;
     t.isCritical = false;
     t.slack = 0;
+    
+    // Ensure forcedStartDate is a Date object if present
+    if (t.forcedStartDate) {
+        t.forcedStartDate = new Date(t.forcedStartDate);
+    }
+
     taskMap.set(t.id, t);
   });
 
   // 1. Forward Pass (Calculate Early Start & Early Finish)
-  // We need to process topologically or iteratively. Since cycles are invalid in Gantt, we assume DAG.
-  // Simple approach: Iterate until no changes, or topological sort. 
-  // For small datasets, a simple multi-pass loop is sufficient and robust against unsorted input.
-  
   let changed = true;
   let iterations = 0;
   const maxIterations = tasks.length * 2; // Safety break
@@ -46,8 +50,14 @@ export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[]
         earlyStart = Math.max(...predecessorEndTimes);
       }
 
-      // Adjust for weekends? (Simplified: No weekend logic for this MVP, straight calendar days)
-      
+      // Apply Constraint: Start No Earlier Than forcedStartDate
+      if (task.forcedStartDate) {
+          const forcedTime = task.forcedStartDate.getTime();
+          if (forcedTime > earlyStart) {
+              earlyStart = forcedTime;
+          }
+      }
+
       const currentStart = task.startDate ? new Date(task.startDate).getTime() : 0;
       
       // Calculate EF = ES + Duration (days * 24 * 60 * 60 * 1000)
@@ -63,7 +73,6 @@ export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[]
   }
 
   // 2. Backward Pass (Calculate Late Start & Late Finish)
-  // Find project end date
   let projectEndDate = new Date(projectStartDate).getTime();
   calculatedTasks.forEach(t => {
     if (t.endDate && new Date(t.endDate).getTime() > projectEndDate) {
@@ -71,11 +80,6 @@ export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[]
     }
   });
 
-  // Set initial Late Finish for tasks with no successors to Project End Date
-  // Actually, standard CPM: LF = Min(Successor LS). If no successor, LF = Project End Date.
-  
-  // To do this efficiently, we can reverse iterate or just do another multi-pass loop.
-  // Let's build a successor map first.
   const successorsMap = new Map<string, string[]>();
   calculatedTasks.forEach(t => {
     t.predecessors.forEach(pId => {
@@ -89,10 +93,6 @@ export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[]
 
   // Initialize Late Finish to Project End
   calculatedTasks.forEach(t => {
-    // Temporary storage for backward pass, we can store in task object if we want, 
-    // but for now we just compute slack directly in the loop.
-    // Let's assume initially all tasks are critical until proven otherwise (slack calculation).
-    // Actually, easier to store LS/LF.
     (t as any)._lateFinish = projectEndDate;
     (t as any)._lateStart = projectEndDate - (t.duration * 24 * 60 * 60 * 1000);
   });
@@ -130,7 +130,6 @@ export const calculateSchedule = (projectStartDate: Date, tasks: Task[]): Task[]
     const ls = (task as any)._lateStart;
     
     // Float = LS - ES
-    // Allow for small floating point errors with a threshold (e.g., 1 minute)
     const diff = ls - es;
     const slackDays = diff / (24 * 60 * 60 * 1000);
     
